@@ -27,9 +27,10 @@ public:
   BplusTreeIndex() = default;
   virtual ~BplusTreeIndex() noexcept;
 
-  RC create(Table *table, const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta);
-  RC open(Table *table, const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta);
-  RC close();
+  RC   create(Table *table, const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta);
+  RC   open(Table *table, const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta);
+  RC   close();
+  void destroy() override;
 
   RC insert_entry(const char *record, const RID *rid) override;
   RC delete_entry(const char *record, const RID *rid) override;
