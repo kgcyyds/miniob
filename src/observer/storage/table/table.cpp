@@ -500,6 +500,33 @@ RC Table::delete_record(const Record &record)
   return rc;
 }
 
+RC Table::update_record(Record &record, Value *values, FieldMeta fields)
+{
+  RC rc = RC::SUCCESS;
+  for (Index *index : indexes_) {
+    rc = index->delete_entry(record.data(), &record.rid());
+    ASSERT(RC::SUCCESS == rc, 
+           "failed to delete entry from index. table name=%s, index name=%s, rid=%s, rc=%s",
+           name(), index->index_meta().name(), record.rid().to_string().c_str(), strrc(rc));
+  }
+  record_handler_->delete_record(&record.rid());
+  for (int i = table_meta_.sys_field_num(); i < table_meta_.field_num(); i++) {
+    const FieldMeta *cur_field = table_meta_.field(i);
+    if (strcmp(fields.name(), cur_field->name()) == 0) {
+      set_value_to_record(record.data(), *values, cur_field);
+      break;
+    }
+  }
+  for (Index *index : indexes_) {
+    rc = index->insert_entry(record.data(), &record.rid());
+    ASSERT(RC::SUCCESS == rc, 
+           "failed to insert entry into index. table name=%s, index name=%s, rid=%s, rc=%s",
+           name(), index->index_meta().name(), record.rid().to_string().c_str(), strrc(rc));
+  }
+  rc = record_handler_->insert_record(record.data(), table_meta_.record_size(), &record.rid());
+  return rc;
+}
+
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;
